@@ -47,11 +47,15 @@ void setup() {
   pinMode(PUMP1_CONTROL_PIN2, OUTPUT);
 
   //Define the motor rates (const)
-  motor1_const = 0.5;
-  
+  motor1_const = 0.66;
+
   //Initially turn off the light. Perhaps we can instead have a shutdown task
   //rather then a startup task this allows for a less bloated setup function
   lightOff();
+
+
+   //Test
+   dispenseSolution(motor1_const, 100, PUMP1_CONTROL_PIN1, PUMP1_CONTROL_PIN2);
 }
 
 void loop() {
@@ -68,25 +72,21 @@ void loop() {
     if ((time_of_day > light_on_time) & (time_of_day < light_off_time)) {
       light_enable = true;
     }
-  
+
     // sample ambient light on schedule
     unsigned long current_time = getTime();
     unsigned long sample_interval = EEPROMReadlong(light_sample_interval_address);
     if ((unsigned long)(current_time - last_light_sample_time) >= sample_interval) {
-  
+
       int sample = sampleLightSensor(true);
-  
+
       int threshold = EEPROMReadlong(light_threshold_address);
       if ((light_enable) and (sample < threshold)) {lightOn();}
       else {lightOff();}
-  
+
       last_light_sample_time = current_time;
     }
   }
-  
-    //Have a if statment which uses current conditions to make a decision to dispense nutrient solution.
-    dispenseSolution(motor1_const, 10000, PUMP1_CONTROL_PIN1, PUMP1_CONTROL_PIN2);
-  
 }
 
 void lightOn() {
@@ -112,11 +112,11 @@ int sampleLightSensor(bool daylight_only) {
 
 void dispenseSolution(float motor_const, float solution_ml, int PUMP_PIN1, int PUMP_PIN2) {
   //Calculate how long the pump should stay activated:
-  float activation_time = motor_const * solution_ml;
+  float activation_time = (solution_ml / motor_const) * 1000;
 
   //This is the value which deterimines for how long the pump should be reversed in order to clear it.
   //This value can be calculated using the motor_const somehow and the length/volume of the tube (or hard coded in).
-  float clearing_time = 3000;
+  float clearing_time = 4000;
 
   //Activate the peristaltic pump for the activation time
   digitalWrite(PUMP_PIN1, HIGH);
